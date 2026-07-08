@@ -294,7 +294,8 @@ def write_landing_page(episodes, feed_url, cover_url):
     </ol>
   </main>
 
-  <footer>Made with care for the journey. &middot; <a href="{escape(feed_url)}">RSS feed</a></footer>
+  <footer>Made with care for the journey. &middot; <a href="{escape(feed_url)}">RSS feed</a><br>
+    Intro and outro music: &ldquo;Gypsy Jazz Coffee Shop&rdquo; by Alex-Productions, via Pixabay.</footer>
 
   <script>
     function copyFeed() {{

@@ -36,6 +36,11 @@ VOICE="${VOICE:-Daniel}"
 RATE="${RATE:-170}"
 BITRATE="${BITRATE:-128k}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Bumper: set BUMPER=1 to wrap each episode with music + spoken intro/outro
+# (requires assets/bumper-music.mp3; see bin/bumper.py).
+BUMPER="${BUMPER:-0}"
+BUMPER_MUSIC="${BUMPER_MUSIC:-$SCRIPT_DIR/../assets/bumper-music.mp3}"
+export BUMPER_MUSIC
 
 TEXT_DIR="episodes/text"
 AUDIO_DIR="episodes/audio"
@@ -54,35 +59,66 @@ strip_header() {
   ' "$1"
 }
 
+# Read a header field (e.g. title) from an episode text file.
+header_field() {
+  awk -v f="$2" '
+    NR==1 && $0=="---" { inhdr=1; next }
+    inhdr && $0=="---" { exit }
+    inhdr {
+      line=tolower($0)
+      if (index(line, tolower(f) ":")==1) {
+        sub(/^[^:]*:[ \t]*/, ""); print; exit
+      }
+    }' "$1"
+}
+
 build_one() {
   local txt="$1"
-  local slug base aiff mp3
+  local slug base aiff mp3 body
   base="$(basename "$txt" .txt)"
   aiff="$TMP_DIR/$base.aiff"
   mp3="$AUDIO_DIR/$base.mp3"
+  # When bumpering, render the narration to a persistent "body" file first (kept
+  # in episodes/bodies/ so re-wrapping never doubles the bumper), then wrap.
+  if [[ "$BUMPER" == "1" ]]; then
+    mkdir -p episodes/bodies
+    body="episodes/bodies/$base.mp3"
+  else
+    body="$mp3"
+  fi
 
-  # Skip if mp3 exists and is newer than the source text.
+  # Skip if mp3 exists and is newer than both the source text and the music.
   if [[ -f "$mp3" && "$mp3" -nt "$txt" ]]; then
-    echo "  ✓ up-to-date: $base.mp3"
-    return
+    if [[ "$BUMPER" != "1" || ( -f "$BUMPER_MUSIC" && "$mp3" -nt "$BUMPER_MUSIC" ) ]]; then
+      echo "  ✓ up-to-date: $base.mp3"
+      return
+    fi
   fi
 
   case "$TTS" in
     google)
       echo "  → synthesizing $base via Google Chirp 3 HD ..."
-      strip_header "$txt" | python3 "$SCRIPT_DIR/tts_google.py" "$mp3"
+      strip_header "$txt" | python3 "$SCRIPT_DIR/tts_google.py" "$body"
       ;;
     say)
       echo "  → narrating $base (say, voice=$VOICE, rate=$RATE) ..."
       strip_header "$txt" | say -v "$VOICE" -r "$RATE" -o "$aiff"
-      echo "  → encoding   $base.mp3 (bitrate=$BITRATE) ..."
-      ffmpeg -y -loglevel error -i "$aiff" -codec:a libmp3lame -b:a "$BITRATE" "$mp3"
+      echo "  → encoding   $base body (bitrate=$BITRATE) ..."
+      ffmpeg -y -loglevel error -i "$aiff" -codec:a libmp3lame -b:a "$BITRATE" "$body"
       ;;
     *)
       echo "ERROR: unknown TTS engine '$TTS' (use 'say' or 'google')" >&2
       exit 1
       ;;
   esac
+
+  if [[ "$BUMPER" == "1" ]]; then
+    local title
+    title="$(header_field "$txt" title)"
+    [[ -z "$title" ]] && title="$base"
+    echo "  → adding music/voice bumper ..."
+    python3 "$SCRIPT_DIR/bumper.py" --title "$title" --body "$body" --out "$mp3"
+  fi
 
   echo "  ✓ built: $mp3"
 }
