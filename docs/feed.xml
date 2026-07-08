@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Colors of Provence — A Traveler's Companion</title>
+    <link>https://ardell.github.io/france_podcast</link>
+    <language>en-us</language>
+    <description>Short spoken-word essays on the history, politics, culture, and food of Paris, Provence, and the Rhône — a personal companion for the journey from Arles to Lyon.</description>
+    <itunes:author>France Podcast</itunes:author>
+    <itunes:summary>Short spoken-word essays on the history, politics, culture, and food of Paris, Provence, and the Rhône — a personal companion for the journey from Arles to Lyon.</itunes:summary>
+    <itunes:explicit>false</itunes:explicit>
+    <itunes:category text="Society &amp; Culture"/>
+    <itunes:image href="https://ardell.github.io/france_podcast/cover.jpg"/>
+    <image>
+      <url>https://ardell.github.io/france_podcast/cover.jpg</url>
+      <title>Colors of Provence — A Traveler's Companion</title>
+      <link>https://ardell.github.io/france_podcast</link>
+    </image>
+    <atom:link href="https://ardell.github.io/france_podcast/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>Thu, 01 Jan 2026 12:00:00 GMT</lastBuildDate>
+    <item>
+      <title>The Café and the Two Revolutions</title>
+      <itunes:title>The Café and the Two Revolutions</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0200-cafe-two-revolutions.mp3</guid>
+      <pubDate>Thu, 01 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0200-cafe-two-revolutions.mp3" length="7989165" type="audio/mpeg"/>
+      <itunes:duration>08:19</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>The Guillotine and the Problem of Legitimacy</title>
+      <itunes:title>The Guillotine and the Problem of Legitimacy</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0300-guillotine-legitimacy.mp3</guid>
+      <pubDate>Fri, 02 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0300-guillotine-legitimacy.mp3" length="7239597" type="audio/mpeg"/>
+      <itunes:duration>07:32</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>What the Revolution Actually Changed</title>
+      <itunes:title>What the Revolution Actually Changed</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0400-revolution-changed.mp3</guid>
+      <pubDate>Sat, 03 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0400-revolution-changed.mp3" length="7570605" type="audio/mpeg"/>
+      <itunes:duration>07:53</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Laïcité — Why France Does Secularism Differently</title>
+      <itunes:title>Laïcité — Why France Does Secularism Differently</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0500-laicite.mp3</guid>
+      <pubDate>Sun, 04 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0500-laicite.mp3" length="7531437" type="audio/mpeg"/>
+      <itunes:duration>07:50</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>The Arrow from Paris — The TGV and the Shape of France</title>
+      <itunes:title>The Arrow from Paris — The TGV and the Shape of France</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0600-tgv.mp3</guid>
+      <pubDate>Mon, 05 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0600-tgv.mp3" length="7071405" type="audio/mpeg"/>
+      <itunes:duration>07:21</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Arles as Rome</title>
+      <itunes:title>Arles as Rome</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0700-arles-as-rome.mp3</guid>
+      <pubDate>Tue, 06 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0700-arles-as-rome.mp3" length="7324845" type="audio/mpeg"/>
+      <itunes:duration>07:37</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Van Gogh's Yellow</title>
+      <itunes:title>Van Gogh's Yellow</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0800-van-gogh-yellow.mp3</guid>
+      <pubDate>Wed, 07 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0800-van-gogh-yellow.mp3" length="7832877" type="audio/mpeg"/>
+      <itunes:duration>08:09</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Les Alyscamps and the Bones of the Dead</title>
+      <itunes:title>Les Alyscamps and the Bones of the Dead</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/0900-alyscamps.mp3</guid>
+      <pubDate>Thu, 08 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/0900-alyscamps.mp3" length="7824045" type="audio/mpeg"/>
+      <itunes:duration>08:08</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>The City of Popes</title>
+      <itunes:title>The City of Popes</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1000-city-of-popes.mp3</guid>
+      <pubDate>Fri, 09 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1000-city-of-popes.mp3" length="7901997" type="audio/mpeg"/>
+      <itunes:duration>08:13</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Pont du Gard and the Genius of Roman Water</title>
+      <itunes:title>Pont du Gard and the Genius of Roman Water</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1100-pont-du-gard.mp3</guid>
+      <pubDate>Sat, 10 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1100-pont-du-gard.mp3" length="7627437" type="audio/mpeg"/>
+      <itunes:duration>07:56</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+  </channel>
+</rss>

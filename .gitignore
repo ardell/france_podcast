@@ -1,0 +1,16 @@
+# Secrets — never commit
+.envrc
+
+# Local build/scratch
+episodes/audio/*.aiff
+episodes/samples/
+
+# macOS
+.DS_Store
+
+# NOTE: episodes/audio/*.mp3 and episodes/text/*.txt ARE tracked (the source
+# and rendered episodes). The docs/ folder (feed.xml, cover.jpg, and
+# docs/episodes/*.mp3) IS tracked — GitHub Pages serves it publicly.
+
+# Claude Code harness internals
+.claude/
