@@ -127,7 +127,11 @@ def main():
     </item>""")
 
     self_link = f"{BASE_URL}/feed.xml" if BASE_URL else "feed.xml"
-    cover = f"{BASE_URL}/cover.jpg" if BASE_URL else "cover.jpg"
+    # Artwork filename is versioned: Apple Podcasts caches cover art per-URL
+    # very aggressively, so bumping the filename forces a fresh fetch when the
+    # image changes. Override with FEED_COVER if needed.
+    cover_file = os.environ.get("FEED_COVER", "cover-v2.jpg")
+    cover = f"{BASE_URL}/{cover_file}" if BASE_URL else cover_file
     now_rfc = formatdate(base_dt.timestamp(), usegmt=True)
 
     feed = f"""<?xml version="1.0" encoding="UTF-8"?>
