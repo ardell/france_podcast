@@ -73,6 +73,7 @@ EPISODE_DATES = {
     "0500-laicite":              (7, 6, 8),
     # Arles Day 1 (Jul 9) — the TGV travel down
     "0600-tgv":                  (7, 9, 0),
+    "0650-the-midi":             (7, 9, 2),
     # Arles Day 2 (Jul 10)
     "0700-arles-as-rome":        (7, 10, 0),
     "0800-van-gogh-yellow":      (7, 10, 2),
