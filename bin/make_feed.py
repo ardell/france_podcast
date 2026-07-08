@@ -73,6 +73,25 @@ def read_title(slug):
     return name.title()
 
 
+def read_field(slug, field):
+    """Read an arbitrary header field (e.g. 'place') from an episode's text."""
+    txt = os.path.join(TEXT_DIR, slug + ".txt")
+    if not os.path.exists(txt):
+        return ""
+    with open(txt, encoding="utf-8") as fh:
+        in_hdr = False
+        for line in fh:
+            s = line.strip()
+            if s == "---":
+                in_hdr = not in_hdr
+                if not in_hdr:
+                    break
+                continue
+            if in_hdr and s.lower().startswith(field.lower() + ":"):
+                return s.split(":", 1)[1].strip()
+    return ""
+
+
 def duration_seconds(path):
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -86,6 +105,151 @@ def hhmmss(secs):
     h, rem = divmod(secs, 3600)
     m, s = divmod(rem, 60)
     return (f"{h}:{m:02d}:{s:02d}" if h else f"{m:02d}:{s:02d}")
+
+
+def write_landing_page(episodes, feed_url, cover_url):
+    """Generate docs/index.html — a friendly, styled subscribe page."""
+    # podcast:// deep link opens Apple Podcasts straight to add-by-URL on iOS.
+    feed_bare = re.sub(r"^https?://", "", feed_url)
+    apple_deep = "podcast://" + feed_bare
+
+    ep_rows = "\n".join(
+        f"""        <li class="ep">
+          <span class="ep-n">{e['n']:02d}</span>
+          <div class="ep-body">
+            <div class="ep-title">{escape(e['title'])}</div>
+            <div class="ep-meta">{escape(e['place'])} &middot; {e['dur']}</div>
+          </div>
+          <audio class="ep-audio" preload="none" controls src="{escape(e['url'])}"></audio>
+        </li>""" for e in episodes)
+
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(FEED_TITLE)}</title>
+<meta name="description" content="{escape(FEED_DESC)}">
+<meta property="og:title" content="{escape(FEED_TITLE)}">
+<meta property="og:description" content="{escape(FEED_DESC)}">
+<meta property="og:image" content="{escape(cover_url)}">
+<meta property="og:type" content="website">
+<style>
+  :root {{
+    --night: #10163a; --night-2: #1c2550; --gold: #e8b04b; --gold-2: #f4d98a;
+    --cream: #fdf6e3; --water: #3a5a80; --ink: #1a1a20; --muted: #6b6f7a;
+    --card: #ffffff; --bg: #f4f0e6; --border: #e4ddca;
+  }}
+  @media (prefers-color-scheme: dark) {{
+    :root {{ --card:#171a2b; --bg:#0d1020; --ink:#ede8dc; --muted:#9aa0b0; --border:#28304f; }}
+  }}
+  * {{ box-sizing: border-box; }}
+  body {{
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }}
+  .hero {{
+    position: relative; color: var(--cream); text-align: center;
+    padding: 0; overflow: hidden;
+    background: linear-gradient(180deg, var(--night) 0%, var(--night-2) 100%);
+  }}
+  .hero-inner {{ padding: 4rem 1.5rem 3.5rem; max-width: 760px; margin: 0 auto; }}
+  .cover {{
+    width: 240px; height: 240px; border-radius: 12px; margin: 0 auto 1.75rem;
+    display: block; box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }}
+  .hero h1 {{ font-size: 2.5rem; margin: 0 0 .4rem; letter-spacing: .5px; }}
+  .hero .tag {{ font-style: italic; font-size: 1.2rem; opacity: .92; margin: 0 0 .3rem; }}
+  .hero .route {{ font-size: .85rem; letter-spacing: 3px; opacity: .8; text-transform: uppercase; }}
+  .wrap {{ max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }}
+  .lede {{ font-size: 1.12rem; color: var(--ink); margin: 0 0 2rem; }}
+  .subscribe {{
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.6rem 1.5rem; margin: 0 0 2.5rem; box-shadow: 0 4px 18px rgba(0,0,0,.06);
+  }}
+  .subscribe h2 {{ margin: 0 0 1rem; font-size: 1.3rem; }}
+  .btn {{
+    display: inline-flex; align-items: center; gap: .5rem; text-decoration: none;
+    background: var(--gold); color: #2a1e00; font-weight: bold; font-family: inherit;
+    padding: .8rem 1.3rem; border-radius: 999px; margin: 0 .5rem .6rem 0;
+    border: none; cursor: pointer; font-size: 1rem; transition: transform .08s ease;
+  }}
+  .btn:hover {{ transform: translateY(-1px); }}
+  .btn.secondary {{ background: transparent; color: var(--ink); border: 1.5px solid var(--border); }}
+  .urlbox {{
+    display: flex; gap: .5rem; margin-top: 1rem; flex-wrap: wrap;
+  }}
+  .urlbox input {{
+    flex: 1 1 260px; font-family: ui-monospace, Menlo, monospace; font-size: .85rem;
+    padding: .7rem .8rem; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--ink);
+  }}
+  .hint {{ font-size: .85rem; color: var(--muted); margin: .8rem 0 0; }}
+  h2.section {{ font-size: 1.4rem; margin: 0 0 1rem; }}
+  ol.eps {{ list-style: none; padding: 0; margin: 0; }}
+  .ep {{
+    display: grid; grid-template-columns: auto 1fr; gap: .3rem 1rem;
+    align-items: center; padding: 1rem 0; border-top: 1px solid var(--border);
+  }}
+  .ep-n {{ font-size: 1.5rem; color: var(--gold); font-weight: bold; grid-row: span 2; }}
+  .ep-title {{ font-weight: bold; }}
+  .ep-meta {{ font-size: .85rem; color: var(--muted); }}
+  .ep-audio {{ grid-column: 1 / -1; width: 100%; margin-top: .5rem; height: 34px; }}
+  footer {{ text-align: center; color: var(--muted); font-size: .8rem; padding: 2rem 1.5rem 3rem; }}
+  @media (max-width: 520px) {{ .hero h1 {{ font-size: 2rem; }} .cover {{ width: 200px; height: 200px; }} }}
+</style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <img class="cover" src="{escape(cover_url)}" alt="{escape(FEED_TITLE)} cover art">
+      <h1>{escape(FEED_TITLE.split('—')[0].strip())}</h1>
+      <p class="tag">A Traveler's Companion</p>
+      <p class="route">Arles &middot; Avignon &middot; Lyon</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="lede">{escape(FEED_DESC)}</p>
+
+    <section class="subscribe">
+      <h2>Listen &amp; subscribe</h2>
+      <a class="btn" href="{escape(apple_deep)}">&#63743; Open in Apple Podcasts</a>
+      <a class="btn secondary" href="https://overcast.fm/">Overcast</a>
+      <a class="btn secondary" href="https://pca.st/">Pocket Casts</a>
+      <div class="urlbox">
+        <input id="feedurl" type="text" readonly value="{escape(feed_url)}">
+        <button class="btn" onclick="copyFeed()">Copy feed URL</button>
+      </div>
+      <p class="hint">In any podcast app, choose &ldquo;Add a show by URL&rdquo; and paste the feed link.
+        On iPhone, the Apple Podcasts button opens the app directly.</p>
+    </section>
+
+    <h2 class="section">Episodes</h2>
+    <ol class="eps">
+{ep_rows}
+    </ol>
+  </main>
+
+  <footer>Made with care for the journey. &middot; <a href="{escape(feed_url)}">RSS feed</a></footer>
+
+  <script>
+    function copyFeed() {{
+      var el = document.getElementById('feedurl');
+      el.select(); el.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(el.value).then(function() {{
+        var b = event.target; var t = b.textContent;
+        b.textContent = 'Copied \\u2713';
+        setTimeout(function(){{ b.textContent = t; }}, 1600);
+      }});
+    }}
+  </script>
+</body>
+</html>
+"""
+    with open(os.path.join(DOCS, "index.html"), "w", encoding="utf-8") as fh:
+        fh.write(html)
 
 
 def main():
@@ -104,9 +268,11 @@ def main():
         tzinfo=timezone.utc, hour=12)
 
     items = []
+    episodes = []  # for the HTML landing page
     for i, mp3 in enumerate(mp3s):
         slug = os.path.splitext(os.path.basename(mp3))[0]
         title = read_title(slug)
+        place = read_field(slug, "place")
         size = os.path.getsize(mp3)
         dur = duration_seconds(mp3)
         # copy audio into docs/episodes/ for static hosting
@@ -125,6 +291,8 @@ def main():
       <itunes:duration>{hhmmss(dur)}</itunes:duration>
       <itunes:explicit>false</itunes:explicit>
     </item>""")
+        episodes.append({"title": title, "place": place,
+                         "dur": hhmmss(dur), "url": ep_url, "n": i + 1})
 
     self_link = f"{BASE_URL}/feed.xml" if BASE_URL else "feed.xml"
     # Artwork filename is versioned: Apple Podcasts caches cover art per-URL
@@ -162,7 +330,10 @@ def main():
     with open(os.path.join(DOCS, "feed.xml"), "w", encoding="utf-8") as fh:
         fh.write(feed)
 
+    write_landing_page(episodes, self_link, cover)
+
     print(f"Wrote docs/feed.xml with {len(items)} episode(s).")
+    print(f"Wrote docs/index.html (subscribe page).")
     print(f"Copied {len(items)} mp3(s) into docs/episodes/.")
     if BASE_URL:
         print(f"Feed URL: {self_link}")
