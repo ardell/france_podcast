@@ -116,6 +116,39 @@ def episode_pubdate(slug, fallback_index):
                       usegmt=True)
 
 
+def episode_display_date(slug):
+    """Human-friendly date like 'Thursday, July 9, 2026' for the trip dates."""
+    if slug not in EPISODE_DATES:
+        return ""
+    mo, day, _ = EPISODE_DATES[slug]
+    dt = datetime(TRIP_YEAR, mo, day)
+    return dt.strftime("%A, %B %-d, %Y")
+
+
+def read_body(slug):
+    """Return the spoken body of an episode as a list of paragraphs."""
+    txt = os.path.join(TEXT_DIR, slug + ".txt")
+    if not os.path.exists(txt):
+        return []
+    lines, in_hdr, seen_hdr = [], False, False
+    with open(txt, encoding="utf-8") as fh:
+        for line in fh:
+            s = line.rstrip("\n")
+            if s.strip() == "---":
+                if not seen_hdr:
+                    in_hdr = True
+                    seen_hdr = True
+                    continue
+                if in_hdr:
+                    in_hdr = False
+                    continue
+            if in_hdr:
+                continue
+            lines.append(s)
+    text = "\n".join(lines).strip()
+    return [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+
+
 def read_title(slug):
     """Pull `title:` from the episode's text header; fall back to the slug."""
     txt = os.path.join(TEXT_DIR, slug + ".txt")
@@ -180,8 +213,9 @@ def write_landing_page(episodes, feed_url, cover_url):
         f"""        <li class="ep">
           <span class="ep-n">{e['n']:02d}</span>
           <div class="ep-body">
-            <div class="ep-title">{escape(e['title'])}</div>
-            <div class="ep-meta">{escape(e['place'])} &middot; {e['dur']}</div>
+            <div class="ep-title"><a href="episodes/{escape(e['slug'])}.html">{escape(e['title'])}</a></div>
+            <div class="ep-meta">{escape(e['place'])} &middot; {e['dur']}
+              &middot; <a href="episodes/{escape(e['slug'])}.html">Read transcript</a></div>
           </div>
           <audio class="ep-audio" preload="none" controls src="{escape(e['url'])}"></audio>
         </li>""" for e in episodes)
@@ -257,7 +291,11 @@ def write_landing_page(episodes, feed_url, cover_url):
   }}
   .ep-n {{ font-size: 1.5rem; color: var(--gold); font-weight: bold; grid-row: span 2; }}
   .ep-title {{ font-weight: bold; }}
+  .ep-title a {{ color: var(--ink); text-decoration: none; }}
+  .ep-title a:hover {{ color: var(--gold); }}
   .ep-meta {{ font-size: .85rem; color: var(--muted); }}
+  .ep-meta a {{ color: var(--gold); text-decoration: none; }}
+  .ep-meta a:hover {{ text-decoration: underline; }}
   .ep-audio {{ grid-column: 1 / -1; width: 100%; margin-top: .5rem; height: 34px; }}
   footer {{ text-align: center; color: var(--muted); font-size: .8rem; padding: 2rem 1.5rem 3rem; }}
   @media (max-width: 520px) {{ .hero h1 {{ font-size: 2rem; }} .cover {{ width: 200px; height: 200px; }} }}
@@ -316,6 +354,85 @@ def write_landing_page(episodes, feed_url, cover_url):
         fh.write(html)
 
 
+def write_episode_page(ep, cover_url):
+    """Generate docs/episodes/<slug>.html — episode page with full transcript."""
+    paras = read_body(ep["slug"])
+    transcript = "\n".join(
+        f"        <p>{escape(p)}</p>" for p in paras
+    ) or "        <p><em>Transcript coming soon.</em></p>"
+    meta_bits = " &middot; ".join(
+        b for b in [escape(ep["place"]), ep.get("date", ""), ep["dur"]] if b)
+
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(ep['title'])} — {escape(FEED_TITLE)}</title>
+<meta name="description" content="Transcript and audio: {escape(ep['title'])}.">
+<meta property="og:title" content="{escape(ep['title'])}">
+<meta property="og:description" content="{escape(FEED_TITLE)}">
+<meta property="og:image" content="{escape(cover_url)}">
+<style>
+  :root {{
+    --night:#10163a; --gold:#e8b04b; --cream:#fdf6e3; --ink:#1a1a20;
+    --muted:#6b6f7a; --card:#ffffff; --bg:#f4f0e6; --border:#e4ddca;
+  }}
+  @media (prefers-color-scheme: dark) {{
+    :root {{ --card:#171a2b; --bg:#0d1020; --ink:#ede8dc; --muted:#9aa0b0; --border:#28304f; }}
+  }}
+  * {{ box-sizing: border-box; }}
+  body {{ margin:0; background:var(--bg); color:var(--ink);
+    font-family:Georgia,'Times New Roman',serif; line-height:1.75;
+    -webkit-font-smoothing:antialiased; }}
+  .top {{ background:linear-gradient(180deg,var(--night),#1c2550); color:var(--cream);
+    padding:2.5rem 1.5rem; }}
+  .top-inner {{ max-width:720px; margin:0 auto; display:flex; gap:1.25rem; align-items:center; }}
+  .top img {{ width:96px; height:96px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,.4); }}
+  .back {{ color:var(--gold); text-decoration:none; font-size:.85rem; letter-spacing:1px;
+    text-transform:uppercase; display:inline-block; margin-bottom:.6rem; }}
+  .top h1 {{ margin:.1rem 0 .3rem; font-size:1.7rem; line-height:1.2; }}
+  .top .meta {{ font-size:.85rem; opacity:.85; }}
+  main {{ max-width:720px; margin:0 auto; padding:2rem 1.5rem 4rem; }}
+  audio {{ width:100%; margin:0 0 2rem; }}
+  .transcript p {{ margin:0 0 1.15rem; font-size:1.08rem; }}
+  .transcript p:first-child::first-letter {{
+    font-size:3.1rem; font-weight:bold; float:left; line-height:.8;
+    padding:.05em .08em 0 0; color:var(--gold); }}
+  footer {{ text-align:center; color:var(--muted); font-size:.8rem;
+    padding:1rem 1.5rem 3rem; max-width:720px; margin:0 auto; }}
+  footer a {{ color:var(--muted); }}
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <img src="../{escape(os.path.basename(cover_url))}" alt="cover">
+      <div>
+        <a class="back" href="../index.html">&larr; All episodes</a>
+        <h1>{escape(ep['title'])}</h1>
+        <div class="meta">{meta_bits}</div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <audio preload="none" controls src="{escape(ep['slug'])}.mp3"></audio>
+    <div class="transcript">
+{transcript}
+    </div>
+  </main>
+  <footer>
+    <a href="../index.html">Colors of Provence</a> &middot;
+    Music: &ldquo;Gypsy Jazz Coffee Shop&rdquo; by Alex-Productions, via Pixabay.
+  </footer>
+</body>
+</html>
+"""
+    with open(os.path.join(DOCS_EP, ep["slug"] + ".html"), "w",
+              encoding="utf-8") as fh:
+        fh.write(html)
+
+
 def main():
     if not BASE_URL:
         print("WARNING: FEED_BASE_URL not set — item/enclosure URLs will be "
@@ -354,7 +471,8 @@ def main():
       <itunes:duration>{hhmmss(dur)}</itunes:duration>
       <itunes:explicit>false</itunes:explicit>
     </item>""")
-        episodes.append({"title": title, "place": place,
+        episodes.append({"title": title, "place": place, "slug": slug,
+                         "date": episode_display_date(slug),
                          "dur": hhmmss(dur), "url": ep_url, "n": i + 1})
 
     self_link = f"{BASE_URL}/feed.xml" if BASE_URL else "feed.xml"
@@ -394,9 +512,12 @@ def main():
         fh.write(feed)
 
     write_landing_page(episodes, self_link, cover)
+    for ep in episodes:
+        write_episode_page(ep, cover)
 
     print(f"Wrote docs/feed.xml with {len(items)} episode(s).")
     print(f"Wrote docs/index.html (subscribe page).")
+    print(f"Wrote {len(episodes)} episode transcript page(s).")
     print(f"Copied {len(items)} mp3(s) into docs/episodes/.")
     if BASE_URL:
         print(f"Feed URL: {self_link}")
