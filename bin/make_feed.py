@@ -71,13 +71,13 @@ EPISODE_DATES = {
     "0300-guillotine-legitimacy":(7, 6, 4),
     "0400-revolution-changed":   (7, 6, 6),
     "0500-laicite":              (7, 6, 8),
-    # Arles Day 1 (Jul 9) — the TGV travel down
+    # Arles Day 1 (Jul 9) — the TGV travel down, arrive Arles that day
     "0600-tgv":                  (7, 9, 0),
     "0650-the-midi":             (7, 9, 2),
-    # Arles Day 2 (Jul 10)
-    "0700-arles-as-rome":        (7, 10, 0),
-    "0800-van-gogh-yellow":      (7, 10, 2),
-    "0900-alyscamps":            (7, 10, 4),
+    "0700-arles-as-rome":        (7, 9, 10),   # arrival day in Arles
+    # Arles Day 2 (Jul 10) — exploring Van Gogh's Arles
+    "0800-van-gogh-yellow":      (7, 10, 0),
+    "0900-alyscamps":            (7, 10, 2),
     # Avignon (Jul 11)
     "1000-city-of-popes":        (7, 11, 0),
     "1100-pont-du-gard":         (7, 11, 2),
