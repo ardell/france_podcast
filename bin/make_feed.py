@@ -149,6 +149,24 @@ def read_body(slug):
     return [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
 
 
+def episode_excerpt(slug, limit=320):
+    """A short plain-text excerpt from the start of the transcript, cut on a
+    sentence boundary near `limit` characters, with an ellipsis."""
+    paras = read_body(slug)
+    if not paras:
+        return ""
+    text = " ".join(paras)
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    # Prefer to end at the last sentence break; else the last word.
+    end = max(cut.rfind(". "), cut.rfind("! "), cut.rfind("? "))
+    if end >= limit * 0.5:
+        return cut[:end + 1]
+    sp = cut.rfind(" ")
+    return (cut[:sp] if sp > 0 else cut).rstrip() + "…"
+
+
 def read_title(slug):
     """Pull `title:` from the episode's text header; fall back to the slug."""
     txt = os.path.join(TEXT_DIR, slug + ".txt")
@@ -461,12 +479,21 @@ def main():
         # pubDate: anchored to arrival at the episode's location, 6am Paris
         pub_rfc = episode_pubdate(slug, i)
         ep_url = f"{BASE_URL}/episodes/{slug}.mp3" if BASE_URL else f"episodes/{slug}.mp3"
+        page_url = f"{BASE_URL}/episodes/{slug}.html" if BASE_URL else f"episodes/{slug}.html"
         guid = ep_url if BASE_URL else slug
+        excerpt = episode_excerpt(slug)
+        # Description: transcript excerpt plus a link to the full transcript page.
+        desc = excerpt
+        if page_url and excerpt:
+            desc = f"{excerpt}\n\nFull transcript: {page_url}"
         items.append(f"""    <item>
       <title>{escape(title)}</title>
       <itunes:title>{escape(title)}</itunes:title>
       <guid isPermaLink="false">{escape(guid)}</guid>
+      <link>{escape(page_url)}</link>
       <pubDate>{pub_rfc}</pubDate>
+      <description>{escape(desc)}</description>
+      <itunes:summary>{escape(desc)}</itunes:summary>
       <enclosure url="{escape(ep_url)}" length="{size}" type="audio/mpeg"/>
       <itunes:duration>{hhmmss(dur)}</itunes:duration>
       <itunes:explicit>false</itunes:explicit>
