@@ -206,7 +206,7 @@ def write_landing_page(episodes, feed_url, cover_url):
       <img class="cover" src="{escape(cover_url)}" alt="{escape(FEED_TITLE)} cover art">
       <h1>{escape(FEED_TITLE.split('—')[0].strip())}</h1>
       <p class="tag">A Traveler's Companion</p>
-      <p class="route">Arles &middot; Avignon &middot; Lyon</p>
+      <p class="route">Paris &middot; Arles &middot; Avignon &middot; Lyon</p>
     </div>
   </header>
 
@@ -298,7 +298,7 @@ def main():
     # Artwork filename is versioned: Apple Podcasts caches cover art per-URL
     # very aggressively, so bumping the filename forces a fresh fetch when the
     # image changes. Override with FEED_COVER if needed.
-    cover_file = os.environ.get("FEED_COVER", "cover-v2.jpg")
+    cover_file = os.environ.get("FEED_COVER", "cover-v3.jpg")
     cover = f"{BASE_URL}/{cover_file}" if BASE_URL else cover_file
     now_rfc = formatdate(base_dt.timestamp(), usegmt=True)
 

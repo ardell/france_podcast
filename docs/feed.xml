@@ -11,9 +11,9 @@
     <itunes:summary>Short spoken-word essays on the history, politics, culture, and food of Paris, Provence, and the Rhône — a personal companion for the journey from Arles to Lyon.</itunes:summary>
     <itunes:explicit>false</itunes:explicit>
     <itunes:category text="Society &amp; Culture"/>
-    <itunes:image href="https://ardell.github.io/france_podcast/cover-v2.jpg"/>
+    <itunes:image href="https://ardell.github.io/france_podcast/cover-v3.jpg"/>
     <image>
-      <url>https://ardell.github.io/france_podcast/cover-v2.jpg</url>
+      <url>https://ardell.github.io/france_podcast/cover-v3.jpg</url>
       <title>Colors of Provence — A Traveler's Companion</title>
       <link>https://ardell.github.io/france_podcast</link>
     </image>
@@ -115,6 +115,87 @@
       <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1100-pont-du-gard.mp3</guid>
       <pubDate>Sun, 11 Jan 2026 12:00:00 GMT</pubDate>
       <enclosure url="https://ardell.github.io/france_podcast/episodes/1100-pont-du-gard.mp3" length="7627437" type="audio/mpeg"/>
+      <itunes:duration>07:56</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>The Rhône as a Highway</title>
+      <itunes:title>The Rhône as a Highway</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1200-rhone-highway.mp3</guid>
+      <pubDate>Mon, 12 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1200-rhone-highway.mp3" length="7698477" type="audio/mpeg"/>
+      <itunes:duration>08:01</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>The Truffle and the Terroir</title>
+      <itunes:title>The Truffle and the Terroir</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1300-truffle-terroir.mp3</guid>
+      <pubDate>Tue, 13 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1300-truffle-terroir.mp3" length="7798317" type="audio/mpeg"/>
+      <itunes:duration>08:07</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Côtes du Rhône — A River You Can Drink</title>
+      <itunes:title>Côtes du Rhône — A River You Can Drink</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1400-cotes-du-rhone.mp3</guid>
+      <pubDate>Wed, 14 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1400-cotes-du-rhone.mp3" length="7508397" type="audio/mpeg"/>
+      <itunes:duration>07:49</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Vienne, Rome, and Jazz</title>
+      <itunes:title>Vienne, Rome, and Jazz</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1500-vienne-rome-jazz.mp3</guid>
+      <pubDate>Thu, 15 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1500-vienne-rome-jazz.mp3" length="7860525" type="audio/mpeg"/>
+      <itunes:duration>08:11</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>The Capital of Eating</title>
+      <itunes:title>The Capital of Eating</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1600-capital-of-eating.mp3</guid>
+      <pubDate>Fri, 16 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1600-capital-of-eating.mp3" length="7487277" type="audio/mpeg"/>
+      <itunes:duration>07:47</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Silk, Revolt, and the Canuts</title>
+      <itunes:title>Silk, Revolt, and the Canuts</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1700-canuts.mp3</guid>
+      <pubDate>Sat, 17 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1700-canuts.mp3" length="7643565" type="audio/mpeg"/>
+      <itunes:duration>07:57</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Fourvière and the Two Hills</title>
+      <itunes:title>Fourvière and the Two Hills</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1800-fourviere-two-hills.mp3</guid>
+      <pubDate>Sun, 18 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1800-fourviere-two-hills.mp3" length="7891245" type="audio/mpeg"/>
+      <itunes:duration>08:13</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>Olive Oil and Butter — France's Three Kitchens</title>
+      <itunes:title>Olive Oil and Butter — France's Three Kitchens</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1900-regional-cooking.mp3</guid>
+      <pubDate>Mon, 19 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1900-regional-cooking.mp3" length="6989613" type="audio/mpeg"/>
+      <itunes:duration>07:16</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+    </item>
+    <item>
+      <title>How to Drink France — A Personal Wine Companion</title>
+      <itunes:title>How to Drink France — A Personal Wine Companion</itunes:title>
+      <guid isPermaLink="false">https://ardell.github.io/france_podcast/episodes/1950-wine-companion.mp3</guid>
+      <pubDate>Tue, 20 Jan 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://ardell.github.io/france_podcast/episodes/1950-wine-companion.mp3" length="7626285" type="audio/mpeg"/>
       <itunes:duration>07:56</itunes:duration>
       <itunes:explicit>false</itunes:explicit>
     </item>
