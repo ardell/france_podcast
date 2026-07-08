@@ -52,6 +52,68 @@ FEED_DESC = os.environ.get(
 )
 BASE_DATE = os.environ.get("FEED_BASE_DATE", "2026-01-01")
 
+# --- Trip-based publication dates -------------------------------------------
+# Each episode's pubDate is anchored to the day the listener arrives at the
+# location the episode is about, at 6am Paris time. Episodes sharing a day are
+# staggered a few minutes apart to preserve listening order in podcast apps.
+# July 2026 is CEST (UTC+2), so 06:00 Paris == 04:00 UTC.
+#
+# Trip anchors: arrive Paris Jul 6; embark Arles Thu Jul 9 (cruise Day 1);
+# then Arles Day 2 Jul 10, Avignon Jul 11, Viviers Jul 12, Tournon Jul 13,
+# Vienne Jul 14, Lyon Jul 15 — all 2026.
+PARIS_UTC_OFFSET_HOURS = 2  # CEST in July
+TRIP_YEAR = 2026
+# slug -> (month, day, minute-offset-after-06:00-Paris)
+EPISODE_DATES = {
+    # Paris cluster — arrival day, Jul 6
+    "0200-cafe-two-revolutions": (7, 6, 0),
+    "0250-parisian-food":        (7, 6, 2),
+    "0300-guillotine-legitimacy":(7, 6, 4),
+    "0400-revolution-changed":   (7, 6, 6),
+    "0500-laicite":              (7, 6, 8),
+    # Arles Day 1 (Jul 9) — the TGV travel down
+    "0600-tgv":                  (7, 9, 0),
+    # Arles Day 2 (Jul 10)
+    "0700-arles-as-rome":        (7, 10, 0),
+    "0800-van-gogh-yellow":      (7, 10, 2),
+    "0900-alyscamps":            (7, 10, 4),
+    # Avignon (Jul 11)
+    "1000-city-of-popes":        (7, 11, 0),
+    "1100-pont-du-gard":         (7, 11, 2),
+    # Viviers (Jul 12)
+    "1200-rhone-highway":        (7, 12, 0),
+    "1300-truffle-terroir":      (7, 12, 2),
+    # Tournon (Jul 13)
+    "1400-cotes-du-rhone":       (7, 13, 0),
+    # Vienne (Jul 14)
+    "1500-vienne-rome-jazz":     (7, 14, 0),
+    # Lyon (Jul 15) — gastronomic capstone; food/wine thematic eps grouped here
+    "1600-capital-of-eating":    (7, 15, 0),
+    "1700-canuts":               (7, 15, 2),
+    "1800-fourviere-two-hills":  (7, 15, 4),
+    "1900-regional-cooking":     (7, 15, 6),
+    "1950-wine-companion":       (7, 15, 8),
+}
+
+
+def episode_pubdate(slug, fallback_index):
+    """Return an RFC-2822 pubDate string for an episode.
+
+    Uses the trip-based EPISODE_DATES map (6am Paris time + stagger). Falls
+    back to a spaced sequence off BASE_DATE for any slug not in the map, so
+    new episodes still get sane ordering until added to the table.
+    """
+    if slug in EPISODE_DATES:
+        mo, day, off = EPISODE_DATES[slug]
+        # 06:00 Paris minus the UTC offset -> UTC hour; add stagger minutes.
+        dt = datetime(TRIP_YEAR, mo, day, 6 - PARIS_UTC_OFFSET_HOURS, off,
+                      tzinfo=timezone.utc)
+        return formatdate(dt.timestamp(), usegmt=True)
+    base = datetime.strptime(BASE_DATE, "%Y-%m-%d").replace(
+        tzinfo=timezone.utc, hour=12)
+    return formatdate((base + timedelta(days=fallback_index)).timestamp(),
+                      usegmt=True)
+
 
 def read_title(slug):
     """Pull `title:` from the episode's text header; fall back to the slug."""
@@ -277,9 +339,8 @@ def main():
         dur = duration_seconds(mp3)
         # copy audio into docs/episodes/ for static hosting
         shutil.copy2(mp3, os.path.join(DOCS_EP, slug + ".mp3"))
-        # pubDate: base + i days, so filename order == podcast order
-        pub = base_dt + timedelta(days=i)
-        pub_rfc = formatdate(pub.timestamp(), usegmt=True)
+        # pubDate: anchored to arrival at the episode's location, 6am Paris
+        pub_rfc = episode_pubdate(slug, i)
         ep_url = f"{BASE_URL}/episodes/{slug}.mp3" if BASE_URL else f"episodes/{slug}.mp3"
         guid = ep_url if BASE_URL else slug
         items.append(f"""    <item>
