@@ -21,6 +21,16 @@ river cruise. Has been walking Paris (Saint-Germain-des-Prés, Le Marais)
 thinking about royalty/aristocracy, the Revolution, and France's relationship
 to the United States.
 
+**Write FOR this listener, but do not AIM the episodes AT them.** These profile
+details shape *what topics to choose and what to emphasize* — lean into food,
+art, Impressionism, the France–US thread — but the episodes are published to a
+public feed with other listeners. So **never address the listener's personal
+interests in the second person.** Avoid lines like "given your love of jazz" or
+"as a home cook, you'll…". Keep the narration written for a general, intelligent
+audience; let the listener's interests guide selection and framing, not direct
+address. (Physical "you are standing here / you'll see this at the next stop"
+travel framing is still fine — that's about the place, not the person.)
+
 ## The angle
 
 Local **history, politics, culture, and food** — always drawing **connections
