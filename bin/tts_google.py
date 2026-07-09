@@ -38,11 +38,20 @@ import base64
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.request
+
+# The pipeline makes many small requests (foreign-word routing splits an episode
+# into dozens of chunks). A single transient network stall would otherwise abort
+# the whole multi-minute build after most chunks already succeeded, so transient
+# failures are retried with backoff. See synthesize_chunk.
+MAX_RETRIES = 4
+RETRY_BACKOFF = [3, 8, 20]  # seconds before retries 2, 3, 4
 
 ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize"
 MAX_BYTES = 4800  # stay safely under the 5000-byte hard limit
@@ -276,21 +285,35 @@ def synthesize_chunk(text, api_key, ssml=False, voice=VOICE, lang_code=LANG):
         "audioConfig": {"audioEncoding": "LINEAR16", "speakingRate": RATE},
     }
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        f"{ENDPOINT}?key={api_key}",
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            body = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", "replace")
-        sys.exit(f"Google TTS HTTP {e.code}: {detail}")
-    except urllib.error.URLError as e:
-        sys.exit(f"Google TTS network error: {e.reason}")
-    return base64.b64decode(body["audioContent"])
+
+    last_err = None
+    for attempt in range(MAX_RETRIES):
+        req = urllib.request.Request(
+            f"{ENDPOINT}?key={api_key}",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+            return base64.b64decode(body["audioContent"])
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", "replace")
+            # 429 (rate limit) and 5xx are transient; other 4xx are our fault
+            # (bad IPA, bad voice name) and will never succeed — fail fast.
+            if e.code != 429 and e.code < 500:
+                sys.exit(f"Google TTS HTTP {e.code}: {detail}")
+            last_err = f"HTTP {e.code}: {detail}"
+        except (urllib.error.URLError, socket.timeout, TimeoutError) as e:
+            # network stall / DNS blip / read timeout — all worth retrying
+            last_err = getattr(e, "reason", None) or str(e) or "read timeout"
+        if attempt < MAX_RETRIES - 1:
+            delay = RETRY_BACKOFF[min(attempt, len(RETRY_BACKOFF) - 1)]
+            print(f"      … transient error ({last_err}); retrying in {delay}s "
+                  f"(attempt {attempt + 2}/{MAX_RETRIES})", flush=True)
+            time.sleep(delay)
+    sys.exit(f"Google TTS failed after {MAX_RETRIES} attempts: {last_err}")
 
 
 def main():
