@@ -10,20 +10,20 @@ assets/.tts-cache/
 # macOS
 .DS_Store
 
-# Rendered audio is a BUILD ARTIFACT — not tracked in git. Episodes are hosted
-# on Dropbox (see bin/publish.sh), not from the repo. The episode SCRIPTS
-# (episodes/text/*.txt) are the source of truth and ARE tracked; regenerate
-# audio anytime with bin/build.sh. Keeping mp3s out of git avoids repo bloat.
+# Local rendered audio is a BUILD ARTIFACT — not tracked in git. The episode
+# SCRIPTS (episodes/text/*.txt) are the source of truth; regenerate audio
+# anytime with bin/build.sh. Keeping these working copies out of git avoids bloat.
 episodes/audio/*.mp3
 episodes/bodies/*.mp3
-docs/episodes/*.mp3
 
 # EXCEPTION: the bumper music is a source asset the build needs — keep it.
 !assets/bumper-music.mp3
 !assets/bumper-music-full.mp3
 
-# The rest of docs/ (feed.xml, cover.jpg, docs/episodes/*.html) IS tracked —
-# GitHub Pages serves the site/feed; only the audio moves to Dropbox.
+# NOTE: docs/episodes/*.mp3 IS tracked on purpose — docs/ is the GitHub Pages
+# publish root, and those mp3s are the audio the public feed serves (the feed's
+# <enclosure> URLs point at ardell.github.io/.../episodes/*.mp3). Do NOT ignore
+# them, or every episode 404s. bin/publish_feed.sh copies them in before commit.
 
 # Claude Code harness internals
 .claude/
