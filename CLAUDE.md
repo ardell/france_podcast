@@ -125,9 +125,24 @@ for the numbering scheme: spaced by ~100 to allow mid-sequence inserts).
    <spoken body starts here — continuous prose, no headers or lists>
    ```
 
-2. **Build the audio**: `bin/build.sh NNNN-slug` (or `bin/build.sh` for all).
-   Pipeline: `say` → `.aiff` → `ffmpeg` → `episodes/audio/NNNN-slug.mp3`.
-   Only rebuilds when the text is newer than the mp3.
+2. **Build the audio**: always
+   `TTS=google BUMPER=1 bin/build.sh NNNN-slug` (or `... bin/build.sh` for all).
+
+   **IMPORTANT — always pass `TTS=google BUMPER=1`.** The script's bare defaults
+   (`TTS=say`, `BUMPER=0`) are WRONG for this podcast: they produce a robotic OS
+   voice with no intro/outro. Every published episode uses the Google Chirp 3 HD
+   voice (`en-US-Chirp3-HD-Aoede`, the default in `bin/tts_google.py`) AND the
+   music-plus-spoken bumper (`bin/bumper.py`, `assets/bumper-music.mp3`). A bare
+   `bin/build.sh` silently does neither — never build without both env vars.
+   - Requires `GOOGLE_TTS_API_KEY` from `.envrc`. If direnv hasn't loaded it in
+     the shell, prefix with `set -a; source .envrc; set +a &&`.
+   - Google path chunks the text and stitches MP3s; then `BUMPER=1` wraps the
+     narration with music + a spoken title greeting and outro.
+   - The build **skips when the mp3 is newer than the text**, so to force a
+     rebuild (e.g. after fixing a bad build) delete the stale outputs first:
+     `rm -f episodes/audio/NNNN-slug.mp3 episodes/bodies/NNNN-slug.mp3`.
+   - `episodes/bodies/NNNN-slug.mp3` is the un-bumpered narration, persisted so
+     re-wrapping never doubles the bumper. Its presence confirms `BUMPER=1` ran.
 
 3. **Publish to Dropbox**: `bin/publish.sh NNNN-slug` (or `bin/publish.sh` for
    all). Copies mp3s to `~/Dropbox/France Podcast/` and regenerates an
@@ -146,8 +161,8 @@ commits and pushes straight to `main`, and the repo's history follows suit. So
 for france_podcast, commit and push to `main` directly rather than opening a
 branch/PR.
 
-Typical one-episode flow after writing the text:
-`bin/build.sh 1000-city-of-popes && bin/publish.sh 1000-city-of-popes`
+Typical one-episode flow after writing the text (note the required env vars):
+`TTS=google BUMPER=1 bin/build.sh 1000-city-of-popes && bin/publish.sh 1000-city-of-popes && bin/publish_feed.sh`
 
 If you rename or renumber episodes, delete the old-named mp3s from
 `~/Dropbox/France Podcast/` before republishing, so no stale files linger:
@@ -155,19 +170,20 @@ If you rename or renumber episodes, delete the old-named mp3s from
 
 ### TTS configuration
 
-- Voice/rate/bitrate are environment variables read by `bin/build.sh`:
-  `VOICE` (default **Daniel**, a warm en_GB male — the best built-in for this
-  narration), `RATE` (default **170** wpm), `BITRATE` (default **128k**).
-- `Samantha` (en_US) is the best American built-in alternative.
+**The standard engine is Google Chirp 3 HD** — every episode uses it. Always
+build with `TTS=google BUMPER=1` (see step 2 above); this is not optional.
 
-**Premium voice — Google Chirp 3 HD (chosen upgrade path).** Set `TTS=google`
-on `bin/build.sh` to use Google Cloud Text-to-Speech instead of `say`:
-
-    TTS=google bin/build.sh 1100-pont-du-gard
+    TTS=google BUMPER=1 bin/build.sh 1100-pont-du-gard
 
 - Requires `GOOGLE_TTS_API_KEY` in the environment (the listener keeps it in
   `.envrc` via direnv; never commit it). It's a restricted Google Cloud API key
   scoped to the Text-to-Speech API.
+
+The `say` engine (`TTS=say`, the script's built-in default) is a **fallback
+only** — offline, robotic, and NOT what gets published. Its knobs, if ever
+needed: `VOICE` (default **Daniel**, en_GB male; `Samantha` is the best en_US
+alternative), `RATE` (**170** wpm), `BITRATE` (**128k**). Do not publish `say`
+output.
 - **Preferred voice: `en-US-Chirp3-HD-Aoede`** (female) — chosen by the listener
   from a 7-voice sample reel. This is the default in `bin/tts_google.py`.
   Override with `GOOGLE_TTS_VOICE` if needed (other candidates auditioned:
