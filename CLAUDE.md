@@ -79,7 +79,9 @@ used to illuminate a bigger point. Weave history, politics, culture, and food
   asserting specifics.
 - Write for the **ear**: spell out things TTS mangles. Avoid symbols; write
   "and" not "&", "1789" is fine but write "the fourteenth of July" where it
-  reads better aloud. Expand abbreviations. Keep sentences speakable.
+  reads better aloud. Expand abbreviations. Keep sentences speakable. For
+  **foreign words**, pronounce them right with SSML/IPA `<phoneme>` tags — see
+  "Foreign-word pronunciation" under the writing conventions below.
 
 ## The route (episode ordering follows the trip)
 
@@ -218,3 +220,33 @@ output.
   metadata; it is never spoken.
 - Everything after the closing `---` is narrated verbatim, so it must be clean,
   speakable English with no stage directions or notes to self.
+
+### Foreign-word pronunciation — SSML / IPA (use it; the trip is multilingual)
+
+The Google engine (`TTS=google`) understands **IPA via SSML**, so foreign words
+(French, Occitan, Italian, Catalan, Latin…) can be pronounced correctly instead
+of guessed by the en-US model. Wrap the word in a `<phoneme>` tag with IPA:
+
+    the <phoneme alphabet="ipa" ph="lɑ̃ɡ dɔk">langue d'oc</phoneme>
+
+- **How it works:** `bin/tts_google.py` auto-detects SSML — if the body contains
+  ANY SSML tag (`<phoneme>`, `<break>`, `<sub>`, `<say-as>`, `<prosody>`, …) the
+  whole body is sent as SSML; otherwise it stays plain text. The build log prints
+  `text` or `SSML/IPA` so you can confirm which path ran. Surrounding prose is
+  XML-escaped automatically and each chunk is wrapped in `<speak>`. Plain-text
+  episodes and the bumper greeting are unaffected. Chirp 3 HD supports SSML on
+  synchronous requests (which is what we use); `<phoneme alphabet="ipa">` works.
+- **`&`, `<`, `>` in an SSML body** are escaped for you, but still prefer writing
+  "and" — the show is written for the ear regardless.
+- **DEMONSTRATE contrasts, don't just describe them.** For a language episode,
+  the point is to *hear* the difference. Instead of "a Parisian clips it and a
+  southerner sings it," voice both: `<phoneme … ph="pɛ̃">pain</phoneme>` then
+  `<phoneme … ph="ˈpɛ.ŋə">pain</phoneme>`. Same trick for Latin fracturing into
+  its daughter languages, oc vs oïl, etc. The SSML support exists precisely so
+  these A/B moments land in the audio.
+- **Audition tricky IPA cheaply** before committing to a full rebuild: pipe a
+  one-line SSML snippet straight through `python3 bin/tts_google.py out.mp3` and
+  listen. (Loose `.mp3`s dropped into `~/Dropbox/France Podcast/` leak into the
+  `.m3u` playlist — park audition clips in a subfolder like `_demos/` instead.)
+- See `0675-tongues-of-the-south.txt` for a worked example (the French-vs-Occitan
+  episode). IPA I author is a best-effort broad transcription — worth an ear-check.
