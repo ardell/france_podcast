@@ -65,14 +65,20 @@ PARIS_UTC_OFFSET_HOURS = 2  # CEST in July
 TRIP_YEAR = 2026
 # slug -> (month, day, minute-offset-after-06:00-Paris)
 EPISODE_DATES = {
+    # Location-agnostic thematic episodes (food/wine/culture/history) are
+    # deliberately spread across thin days rather than lumped at the ends, so
+    # the week runs at a steady ~2 episodes/day. Each is placed on a day whose
+    # place-anchored theme it complements.
+    #
     # Paris cluster — arrival day, Jul 6
     "0200-cafe-two-revolutions": (7, 6, 0),
     "0250-parisian-food":        (7, 6, 2),
     "0300-guillotine-legitimacy":(7, 6, 4),
-    "0275-julia-child":          (7, 8, 0),
+    # Jul 7 — Curie's Paris; paired with the Revolution's rationalizing project
     "0350-marie-curie":          (7, 7, 0),
-    "0400-revolution-changed":   (7, 6, 6),
-    "0500-laicite":              (7, 6, 8),
+    "0400-revolution-changed":   (7, 7, 2),   # thematic, moved from 7/6
+    # Jul 8
+    "0275-julia-child":          (7, 8, 0),
     # Arles Day 1 (Jul 9) — the TGV travel down, arrive Arles that day
     "0600-tgv":                  (7, 9, 0),
     "0650-the-midi":             (7, 9, 2),
@@ -80,22 +86,23 @@ EPISODE_DATES = {
     # Arles Day 2 (Jul 10) — exploring Van Gogh's Arles
     "0800-van-gogh-yellow":      (7, 10, 0),
     "0900-alyscamps":            (7, 10, 2),
-    # Avignon (Jul 11)
+    # Avignon (Jul 11) — the papal city; laïcité rides the church-state theme
     "1000-city-of-popes":        (7, 11, 0),
     "1100-pont-du-gard":         (7, 11, 2),
+    "0500-laicite":              (7, 11, 4),   # thematic, moved from 7/6
     # Viviers (Jul 12)
     "1200-rhone-highway":        (7, 12, 0),
     "1300-truffle-terroir":      (7, 12, 2),
-    # Tournon (Jul 13)
+    # Tournon (Jul 13) — wine/food leg; the regional-cooking essay fits here
     "1400-cotes-du-rhone":       (7, 13, 0),
-    # Vienne (Jul 14)
+    "1900-regional-cooking":     (7, 13, 2),   # thematic, moved from 7/15
+    # Vienne (Jul 14) — wine companion sits well the day before Lyon
     "1500-vienne-rome-jazz":     (7, 14, 0),
-    # Lyon (Jul 15) — gastronomic capstone; food/wine thematic eps grouped here
+    "1950-wine-companion":       (7, 14, 2),   # thematic, moved from 7/15
+    # Lyon (Jul 15) — gastronomic capstone
     "1600-capital-of-eating":    (7, 15, 0),
     "1700-canuts":               (7, 15, 2),
     "1800-fourviere-two-hills":  (7, 15, 4),
-    "1900-regional-cooking":     (7, 15, 6),
-    "1950-wine-companion":       (7, 15, 8),
 }
 
 
