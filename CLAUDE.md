@@ -143,6 +143,17 @@ for the numbering scheme: spaced by ~100 to allow mid-sequence inserts).
      `rm -f episodes/audio/NNNN-slug.mp3 episodes/bodies/NNNN-slug.mp3`.
    - `episodes/bodies/NNNN-slug.mp3` is the un-bumpered narration, persisted so
      re-wrapping never doubles the bumper. Its presence confirms `BUMPER=1` ran.
+   - **Bumper mastering (applies to NEW builds only; existing episodes were not
+     re-rendered):** the bumper now uses podcast best-practice leveling — a
+     gentle sidechain duck (slow attack/long release so the music doesn't pump),
+     the music high-passed and kept clearly under the voice, slow multi-second
+     fades, a beat of silence before the outro, an outro that samples the END of
+     the track (fading in) so it lands on the song's natural ending, and a final
+     normalize to -16 LUFS. The intro/outro voice lines are cached in
+     `assets/.tts-cache/` so re-rendering for level tweaks doesn't re-bill TTS.
+   - **Rendered audio is no longer tracked in git** (build artifact; hosted on
+     Dropbox). Scripts are the source of truth — regenerate audio with
+     `bin/build.sh`. The bumper music (`assets/bumper-music*.mp3`) IS tracked.
 
 3. **Publish to Dropbox**: `bin/publish.sh NNNN-slug` (or `bin/publish.sh` for
    all). Copies mp3s to `~/Dropbox/France Podcast/` and regenerates an
