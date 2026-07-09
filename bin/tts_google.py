@@ -53,6 +53,54 @@ RATE = float(os.environ.get("GOOGLE_TTS_RATE", "1.0"))
 # Final MP3 bitrate for the single, high-quality encode at the end.
 BITRATE = os.environ.get("GOOGLE_TTS_BITRATE", "128k")
 
+# --- Foreign-word voice routing --------------------------------------------
+# The show is narrated by one persona (Aoede). Foreign words are pronounced
+# correctly by routing each to the RIGHT voice instead of making the en-US
+# voice guess. The same Aoede persona exists in fr-FR / it-IT / es-ES, so a
+# spliced foreign word blends seamlessly with the English narration.
+#
+# Mark foreign words in the .txt with a custom <fw> tag (which Google never
+# sees — we strip/route it here):
+#     <fw lang="it">notte</fw>                     native voice, spoken as-is
+#     <fw lang="oc" ipa="ˈnɥɛtʃ">nuèch</fw>        no native voice -> IPA on a
+#                                                  close Romance voice
+#
+# VOICE_PERSONA lets every language reuse the show's persona. LANG_VOICE maps a
+# short lang code to (languageCode, native?). Languages WITHOUT a native
+# Chirp3-HD voice (Occitan, Catalan, Latin, Nissart, Ligurian…) fall back to a
+# close Romance voice AND require an ipa="" attribute so the word is synthesized
+# via <phoneme> rather than mis-read as English. Critically the fallback voice
+# is Romance, not English, so vowels like [ɔ] render correctly.
+VOICE_PERSONA = os.environ.get("GOOGLE_TTS_VOICE", "en-US-Chirp3-HD-Aoede").split("-")[-1]
+
+
+def _voice(language_code):
+    return f"{language_code}-Chirp3-HD-{VOICE_PERSONA}"
+
+
+# short code -> (languageCode for the request, has a native Chirp3-HD voice?)
+# For non-native langs the languageCode is the FALLBACK Romance voice to carry
+# the IPA (fr for Occitan/Catalan/Nissart; it for Latin/Ligurian).
+LANG_ROUTES = {
+    "fr": ("fr-FR", True),
+    "it": ("it-IT", True),
+    "es": ("es-ES", True),
+    "en": ("en-US", True),
+    # no native Chirp3-HD voice -> IPA on the nearest Romance voice:
+    "oc": ("fr-FR", False),   # Occitan / Provençal
+    "ca": ("es-ES", False),   # Catalan (Spanish vowels are closer than French)
+    "nis": ("fr-FR", False),  # Nissart (Niçard) — Occitan-Italian
+    "lig": ("it-IT", False),  # Ligurian
+    "la": ("it-IT", False),   # Latin — ecclesiastical/Italianate reading
+}
+
+FW_RE = re.compile(
+    r'<fw\s+lang="(?P<lang>[a-z]+)"'
+    r'(?:\s+ipa="(?P<ipa>[^"]*)")?\s*>'
+    r'(?P<word>.*?)</fw>',
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 # A body is treated as SSML if it contains any tag we support. We look for an
 # opening angle bracket followed by a known SSML element name.
@@ -84,6 +132,83 @@ def escape_ssml_prose(text):
             seg = seg.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             out.append(seg)
     return "".join(out)
+
+
+def segment_by_voice(text):
+    """Split the body into runs, each tagged with the voice that speaks it.
+
+    Returns a list of dicts: {"voice", "lang_code", "text", "ssml"}.
+    - Narration between <fw> tags -> the show voice (en-US persona), plain text.
+    - <fw lang="it">notte</fw>     -> native it voice, plain word.
+    - <fw lang="oc" ipa="…">…</fw> -> fallback Romance voice, SSML <phoneme>.
+
+    Adjacent narration is emitted as-is; each <fw> is its own run so it can use
+    a different voice. Runs are later chunked and synthesized independently and
+    concatenated, so the persona stays constant and only the language shifts.
+    """
+    runs = []
+    pos = 0
+    for m in FW_RE.finditer(text):
+        # narration before this tag
+        if m.start() > pos:
+            narr = text[pos:m.start()]
+            if narr.strip():
+                runs.append({"voice": VOICE, "lang_code": LANG,
+                             "text": narr, "ssml": is_ssml(narr)})
+        lang = m.group("lang").lower()
+        ipa = m.group("ipa")
+        word = m.group("word").strip()
+        route = LANG_ROUTES.get(lang)
+        if route is None:
+            sys.exit(f"ERROR: <fw> unknown lang '{lang}'. Known: "
+                     f"{', '.join(sorted(LANG_ROUTES))}.")
+        lang_code, native = route
+        if native:
+            # native voice speaks the word directly (plain text is best here)
+            runs.append({"voice": _voice(lang_code), "lang_code": lang_code,
+                         "text": word, "ssml": False})
+        else:
+            if not ipa:
+                sys.exit(f"ERROR: <fw lang=\"{lang}\"> needs an ipa=\"…\" "
+                         f"attribute (no native voice for '{lang}'): {word!r}")
+            phon = f'<phoneme alphabet="ipa" ph="{ipa}">{word}</phoneme>'
+            runs.append({"voice": _voice(lang_code), "lang_code": lang_code,
+                         "text": phon, "ssml": True})
+        pos = m.end()
+    # trailing narration
+    if pos < len(text):
+        tail = text[pos:]
+        if tail.strip():
+            runs.append({"voice": VOICE, "lang_code": LANG,
+                         "text": tail, "ssml": is_ssml(tail)})
+    # if there were no <fw> tags at all, one run for the whole body
+    if not runs:
+        runs.append({"voice": VOICE, "lang_code": LANG,
+                     "text": text, "ssml": is_ssml(text)})
+    return _merge_adjacent(runs)
+
+
+def _merge_adjacent(runs):
+    """Coalesce consecutive runs that use the same voice, to cut API calls.
+
+    A dense episode splits narration around every <fw> word, yielding many tiny
+    same-voice runs (and thus one API call each). Merging neighbours that share
+    a voice collapses those back together. When either side is SSML the merged
+    run is SSML — the plain-text side is then escaped as SSML prose at synthesis
+    time (escape_ssml_prose leaves real tags intact), so a native word and the
+    narration around it can share one request. Chunking still keeps each request
+    under the byte limit. Only merges within the SAME voice, so a language
+    switch always remains its own request (correct pronunciation preserved).
+    """
+    merged = []
+    for r in runs:
+        if merged and merged[-1]["voice"] == r["voice"]:
+            prev = merged[-1]
+            prev["text"] = prev["text"] + " " + r["text"]
+            prev["ssml"] = prev["ssml"] or r["ssml"]
+        else:
+            merged.append(dict(r))
+    return merged
 
 
 def chunk_text(text, max_bytes=MAX_BYTES):
@@ -125,7 +250,7 @@ def chunk_text(text, max_bytes=MAX_BYTES):
     return chunks
 
 
-def synthesize_chunk(text, api_key, ssml=False):
+def synthesize_chunk(text, api_key, ssml=False, voice=VOICE, lang_code=LANG):
     """Call the REST endpoint; return raw LINEAR16 WAV bytes.
 
     We request LINEAR16 (uncompressed PCM in a WAV container) rather than MP3,
@@ -136,7 +261,8 @@ def synthesize_chunk(text, api_key, ssml=False):
 
     When ssml=True the chunk is XML-escaped (prose only, tags preserved) and
     wrapped in <speak>…</speak>, and sent via the ssml input field so <phoneme>
-    IPA and other SSML tags take effect.
+    IPA and other SSML tags take effect. voice/lang_code select which Chirp
+    persona+language speaks this chunk (foreign-word routing).
     """
     if ssml:
         inner = escape_ssml_prose(text)
@@ -146,7 +272,7 @@ def synthesize_chunk(text, api_key, ssml=False):
         input_field = {"text": text}
     payload = {
         "input": input_field,
-        "voice": {"languageCode": LANG, "name": VOICE},
+        "voice": {"languageCode": lang_code, "name": voice},
         "audioConfig": {"audioEncoding": "LINEAR16", "speakingRate": RATE},
     }
     data = json.dumps(payload).encode("utf-8")
@@ -180,30 +306,55 @@ def main():
     if not text:
         sys.exit("ERROR: no input text on stdin.")
 
-    ssml = is_ssml(text)
-    # SSML adds bytes the raw text doesn't have: the <speak></speak> wrapper and
-    # &-escaping of prose. Chunk with extra headroom so the wrapped, escaped
-    # request still clears the 5000-byte hard limit.
-    budget = 4200 if ssml else MAX_BYTES
-    chunks = chunk_text(text, max_bytes=budget)
-    mode = "SSML/IPA" if ssml else "text"
-    print(f"    Google Chirp 3 HD ({VOICE}, {mode}): {len(chunks)} chunk(s)",
-          flush=True)
+    # Split the body into voice runs (narration + foreign-word segments), then
+    # chunk each run to the byte limit. Every chunk carries its own voice/lang.
+    runs = segment_by_voice(text)
+    fw_runs = [r for r in runs if r["voice"] != VOICE]
+    if fw_runs:
+        langs = sorted({r["voice"].split("-", 2)[0] + "-" + r["voice"].split("-")[1]
+                        for r in fw_runs})
+        print(f"    Foreign-word routing: {len(fw_runs)} segment(s) -> "
+              f"{', '.join(langs)}", flush=True)
+
+    work = []  # ordered list of (chunk_text, ssml, voice, lang_code)
+    for r in runs:
+        budget = 4200 if r["ssml"] else MAX_BYTES
+        for ch in chunk_text(r["text"], max_bytes=budget):
+            work.append((ch, r["ssml"], r["voice"], r["lang_code"]))
+
+    print(f"    Google Chirp 3 HD ({VOICE_PERSONA} persona): "
+          f"{len(work)} chunk(s)", flush=True)
 
     with tempfile.TemporaryDirectory() as tmp:
-        parts = []
-        for i, chunk in enumerate(chunks):
-            audio = synthesize_chunk(chunk, api_key, ssml=ssml)  # LINEAR16 WAV
+        raw_parts = []
+        for i, (chunk, ssml, voice, lang_code) in enumerate(work):
+            audio = synthesize_chunk(chunk, api_key, ssml=ssml,
+                                     voice=voice, lang_code=lang_code)
             part = os.path.join(tmp, f"part-{i:03d}.wav")
             with open(part, "wb") as fh:
                 fh.write(audio)
-            parts.append(part)
-            print(f"      chunk {i + 1}/{len(chunks)} ok", flush=True)
+            raw_parts.append(part)
+            tag = "" if voice == VOICE else f" [{lang_code}]"
+            print(f"      chunk {i + 1}/{len(work)} ok{tag}", flush=True)
 
-        # Concatenate the raw WAV segments losslessly, then encode to MP3 ONCE.
+        # Foreign-word runs may come back at a different sample rate than the
+        # narration; the ffmpeg concat DEMUXER requires identical params or the
+        # output is garbled. Re-encode every part to a common PCM format first,
+        # so concatenation is safe regardless of the source voice.
+        norm_parts = []
+        for i, p in enumerate(raw_parts):
+            npart = os.path.join(tmp, f"norm-{i:03d}.wav")
+            subprocess.run(
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", p,
+                 "-ar", "24000", "-ac", "1", "-c:a", "pcm_s16le", npart],
+                check=True,
+            )
+            norm_parts.append(npart)
+
+        # Concatenate the normalized WAV segments, then encode to MP3 ONCE.
         listfile = os.path.join(tmp, "list.txt")
         with open(listfile, "w") as fh:
-            for p in parts:
+            for p in norm_parts:
                 fh.write(f"file '{p}'\n")
         subprocess.run(
             ["ffmpeg", "-y", "-loglevel", "error",

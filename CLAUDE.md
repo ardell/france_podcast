@@ -80,8 +80,9 @@ used to illuminate a bigger point. Weave history, politics, culture, and food
 - Write for the **ear**: spell out things TTS mangles. Avoid symbols; write
   "and" not "&", "1789" is fine but write "the fourteenth of July" where it
   reads better aloud. Expand abbreviations. Keep sentences speakable. For
-  **foreign words**, pronounce them right with SSML/IPA `<phoneme>` tags — see
-  "Foreign-word pronunciation" under the writing conventions below.
+  **foreign words** and French place names, pronounce them right with the `<fw>`
+  voice-routing tag — see "Foreign-word pronunciation" under the writing
+  conventions below.
 
 ## The route (episode ordering follows the trip)
 
@@ -221,32 +222,68 @@ output.
 - Everything after the closing `---` is narrated verbatim, so it must be clean,
   speakable English with no stage directions or notes to self.
 
-### Foreign-word pronunciation — SSML / IPA (use it; the trip is multilingual)
+### Foreign-word pronunciation — the `<fw>` tag (use it; the trip is multilingual)
 
-The Google engine (`TTS=google`) understands **IPA via SSML**, so foreign words
-(French, Occitan, Italian, Catalan, Latin…) can be pronounced correctly instead
-of guessed by the en-US model. Wrap the word in a `<phoneme>` tag with IPA:
+Foreign words and French place names are pronounced correctly by ROUTING each to
+the right Chirp voice, not by making the en-US narrator guess. The show voice is
+one persona (Aoede); the SAME persona exists in `fr-FR`, `it-IT`, `es-ES`, so a
+routed word is pronounced natively yet blends seamlessly with the narration.
 
-    the <phoneme alphabet="ipa" ph="lɑ̃ɡ dɔk">langue d'oc</phoneme>
+Mark a word with the custom `<fw>` tag (which `bin/tts_google.py` strips/routes;
+Google never sees it):
 
-- **How it works:** `bin/tts_google.py` auto-detects SSML — if the body contains
-  ANY SSML tag (`<phoneme>`, `<break>`, `<sub>`, `<say-as>`, `<prosody>`, …) the
-  whole body is sent as SSML; otherwise it stays plain text. The build log prints
-  `text` or `SSML/IPA` so you can confirm which path ran. Surrounding prose is
-  XML-escaped automatically and each chunk is wrapped in `<speak>`. Plain-text
-  episodes and the bumper greeting are unaffected. Chirp 3 HD supports SSML on
-  synchronous requests (which is what we use); `<phoneme alphabet="ipa">` works.
-- **`&`, `<`, `>` in an SSML body** are escaped for you, but still prefer writing
-  "and" — the show is written for the ear regardless.
-- **DEMONSTRATE contrasts, don't just describe them.** For a language episode,
-  the point is to *hear* the difference. Instead of "a Parisian clips it and a
-  southerner sings it," voice both: `<phoneme … ph="pɛ̃">pain</phoneme>` then
-  `<phoneme … ph="ˈpɛ.ŋə">pain</phoneme>`. Same trick for Latin fracturing into
-  its daughter languages, oc vs oïl, etc. The SSML support exists precisely so
-  these A/B moments land in the audio.
-- **Audition tricky IPA cheaply** before committing to a full rebuild: pipe a
-  one-line SSML snippet straight through `python3 bin/tts_google.py out.mp3` and
-  listen. (Loose `.mp3`s dropped into `~/Dropbox/France Podcast/` leak into the
-  `.m3u` playlist — park audition clips in a subfolder like `_demos/` instead.)
-- See `0675-tongues-of-the-south.txt` for a worked example (the French-vs-Occitan
-  episode). IPA I author is a best-effort broad transcription — worth an ear-check.
+    In Italy that became <fw lang="it">notte</fw>.        (native voice)
+    it became <fw lang="oc" ipa="ˈnɥɛtʃ">nuèch</fw>.       (IPA on a Romance voice)
+
+**Two cases:**
+1. **Language has a native Chirp3-HD voice** (`fr`, `it`, `es`) → `<fw lang="fr">mot</fw>`
+   — the native voice speaks the word directly. No IPA needed; this is the
+   preferred, most-correct path.
+2. **No native voice** (`oc` Occitan, `ca` Catalan, `la` Latin, `nis` Nissart,
+   `lig` Ligurian) → `<fw lang="oc" ipa="…">word</fw>` — REQUIRES an `ipa=""`
+   attribute, synthesized as `<phoneme>` on the nearest Romance voice
+   (oc/ca/nis→French, la/lig→Italian). Critically the fallback voice is Romance,
+   NOT English, so vowels like `[ɔ]` render correctly (the en-US voice flattens
+   `[ɔ]`→"ah", which is why raw IPA-on-English sounded wrong).
+
+The routing table lives in `LANG_ROUTES` in `bin/tts_google.py`; add codes there.
+
+**Conventions:**
+- **French place names → `<fw lang="fr">` on FIRST mention per episode**, then let
+  the English narrator say them normally afterward. (Arles, Aix, Avignon, Viviers,
+  Tournon, Vienne, Lyon, Paris, Marseille, Rhône, Nice, Provence, Languedoc, …).
+  First-mention-only keeps flow natural and avoids fragmenting the episode into
+  hundreds of tiny splices — "Paris" alone appears 100+ times across the series.
+- **The language's own name** (occitan, provençal) → `<fw lang="fr">occitan</fw>`
+  on first mention. But when the narrator uses the plain ENGLISH name of a
+  language mid-sentence ("its own speech, Nissart"), leave it English — an English
+  speaker says "Occitan," not the native form. Judgement call; lean on flow.
+- **Match routing density to the episode.** A LANGUAGE episode (like `0675`)
+  earns dense routing — the point is to hear the words, so tag liberally. A
+  NORMAL episode should route SPARINGLY: French place-name first-mentions and a
+  few genuinely tricky words, and that's about it. Don't `<fw>`-tag every French
+  noun in a food or history episode — it fragments the audio, slows the build,
+  and the payoff isn't there when the episode isn't about language. When in
+  doubt on a non-language episode, leave it in the narrator's English voice.
+- **DEMONSTRATE contrasts, don't just describe them.** Voice both sides:
+  `<fw lang="fr">pain</fw>` (north) vs `<fw lang="oc" ipa="ˈpɛ.ŋə">pain</fw>`
+  (south); Latin `noctem` fracturing into notte/noche/nuit/nuèch; oc vs oïl.
+  (This is a language-episode move; don't force it into ordinary episodes.)
+- **Look up IPA, don't guess it** — Wiktionary gives authoritative IPA *and*
+  native audio per language. My hand-authored IPA is best-effort; verify it.
+
+**How it works / gotchas:**
+- `segment_by_voice()` splits the body into per-voice runs; each run is chunked
+  and synthesized with its own voice, then all segments are concatenated (with a
+  sample-rate normalize pass so cross-language splices don't garble). Plain-text
+  episodes and the bumper greeting are untouched (no `<fw>` → one en-US run).
+- **Cost is per-character, not per-request** — routing/splicing is the SAME price
+  as single-shot; only the SSML markup on IPA words adds a few chars. But it makes
+  MANY more API calls (dense episodes hit 70+), so it's slower and slightly more
+  exposed to transient network errors. Fine for a language episode; light for
+  normal ones.
+- **Audition cheaply** before a full rebuild: pipe a one-line snippet through
+  `python3 bin/tts_google.py out.mp3`. Park audition clips in
+  `~/Dropbox/France Podcast/_demos/` — loose mp3s in the main folder leak into
+  the `.m3u` playlist.
+- Worked example: `0675-tongues-of-the-south.txt` (French-vs-Occitan episode).
