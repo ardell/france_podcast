@@ -460,7 +460,42 @@ def write_episode_page(ep, cover_url):
         fh.write(html)
 
 
+def existing_feed_item_count():
+    """How many <item> entries the currently-published docs/feed.xml has.
+
+    Returns 0 if there is no feed yet (first run) or it can't be read.
+    """
+    path = os.path.join(DOCS, "feed.xml")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return fh.read().count("<item>")
+    except OSError:
+        return 0
+
+
+def guard_against_shrink(new_count, force):
+    """Refuse to publish a feed that lost most of its episodes.
+
+    episodes/audio/ is a rebuildable artifact (gitignored, wiped by rebuilds),
+    and this generator globs it — so a half-finished or interrupted rebuild
+    would silently publish a near-empty feed over the good one. Turn that into a
+    loud error: if the episode count drops by more than 20% vs. the live feed,
+    stop. Restore audio from Dropbox and re-run, or pass --force to override
+    intentionally.
+    """
+    prev = existing_feed_item_count()
+    if not force and prev and new_count < prev * 0.8:
+        sys.exit(
+            f"Refusing to publish: feed would shrink from {prev} to {new_count} "
+            f"episode(s).\nepisodes/audio/ looks incomplete (it is gitignored and "
+            f"wiped by rebuilds).\nRestore the mp3s — e.g. "
+            f"cp -p ~/Dropbox/'France Podcast'/[0-9]*.mp3 episodes/audio/ — "
+            f"then re-run.\nPass --force to publish the smaller feed anyway."
+        )
+
+
 def main():
+    force = "--force" in sys.argv[1:]
     if not BASE_URL:
         print("WARNING: FEED_BASE_URL not set — item/enclosure URLs will be "
               "relative and the feed will NOT work in a podcast app until you "
@@ -469,6 +504,7 @@ def main():
     mp3s = sorted(glob.glob(os.path.join(AUDIO_DIR, "*.mp3")))
     if not mp3s:
         sys.exit("No episodes in episodes/audio/ — build some first.")
+    guard_against_shrink(len(mp3s), force)
 
     os.makedirs(DOCS_EP, exist_ok=True)
 
