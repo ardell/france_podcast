@@ -133,6 +133,19 @@ for the numbering scheme: spaced by ~100 to allow mid-sequence inserts).
    all). Copies mp3s to `~/Dropbox/France Podcast/` and regenerates an
    `.m3u` playlist in filename order. Dropbox syncs to the phone automatically.
 
+4. **Publish to GitHub Pages** (the public RSS feed + episode pages):
+   `bin/publish_feed.sh`. Regenerates `docs/feed.xml`, `docs/index.html`, and
+   the per-episode pages, copies mp3s into `docs/episodes/`, then commits and
+   pushes to `origin/main`. This is a separate publish path from Dropbox:
+   `publish.sh` feeds the phone, `publish_feed.sh` feeds the public site at
+   `https://ardell.github.io/france_podcast/feed.xml`.
+
+**Git convention — commit directly to `main` for THIS repo only.** This
+overrides the usual `jason/`-branch-per-change workflow: `bin/publish_feed.sh`
+commits and pushes straight to `main`, and the repo's history follows suit. So
+for france_podcast, commit and push to `main` directly rather than opening a
+branch/PR.
+
 Typical one-episode flow after writing the text:
 `bin/build.sh 1000-city-of-popes && bin/publish.sh 1000-city-of-popes`
 
