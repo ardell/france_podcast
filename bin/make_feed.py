@@ -69,6 +69,7 @@ EPISODE_DATES = {
     "0200-cafe-two-revolutions": (7, 6, 0),
     "0250-parisian-food":        (7, 6, 2),
     "0300-guillotine-legitimacy":(7, 6, 4),
+    "0275-julia-child":          (7, 8, 0),
     "0350-marie-curie":          (7, 7, 0),
     "0400-revolution-changed":   (7, 6, 6),
     "0500-laicite":              (7, 6, 8),
