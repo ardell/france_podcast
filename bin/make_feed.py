@@ -215,6 +215,59 @@ def read_field(slug, field):
     return ""
 
 
+def read_map_stops(slug):
+    """Read repeated `map:` header lines as (label, lat, lng) walking-tour stops.
+
+    Each line looks like:  map: Label here | 43.6733,4.6253
+    Returns a list in file order; empty if the episode has no map stops.
+    """
+    txt = os.path.join(TEXT_DIR, slug + ".txt")
+    if not os.path.exists(txt):
+        return []
+    stops = []
+    with open(txt, encoding="utf-8") as fh:
+        in_hdr = False
+        for line in fh:
+            s = line.strip()
+            if s == "---":
+                in_hdr = not in_hdr
+                if not in_hdr:
+                    break
+                continue
+            if in_hdr and s.lower().startswith("map:"):
+                val = s.split(":", 1)[1].strip()
+                if "|" not in val:
+                    continue
+                label, coords = (p.strip() for p in val.split("|", 1))
+                coords = coords.replace(" ", "")
+                if "," not in coords:
+                    continue
+                lat, lng = coords.split(",", 1)
+                stops.append((label, lat, lng))
+    return stops
+
+
+def render_map_notes(slug):
+    """Return an HTML show-notes block of map links, or '' if none."""
+    stops = read_map_stops(slug)
+    if not stops:
+        return ""
+    items = []
+    for i, (label, lat, lng) in enumerate(stops, 1):
+        url = f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+        items.append(
+            f'        <li><span class="stop-n">{i}</span>'
+            f'<a href="{escape(url)}" target="_blank" rel="noopener">'
+            f'{escape(label)}</a>'
+            f'<span class="stop-geo">{escape(lat)}, {escape(lng)}</span></li>')
+    lis = "\n".join(items)
+    return (
+        '    <section class="mapnotes">\n'
+        '      <h2>Walking tour &mdash; the stops</h2>\n'
+        f'      <ol>\n{lis}\n      </ol>\n'
+        '    </section>\n')
+
+
 def duration_seconds(path):
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-show_entries", "format=duration",
@@ -387,6 +440,7 @@ def write_episode_page(ep, cover_url):
     transcript = "\n".join(
         f"        <p>{escape(p)}</p>" for p in paras
     ) or "        <p><em>Transcript coming soon.</em></p>"
+    mapnotes = render_map_notes(ep["slug"])
     meta_bits = " &middot; ".join(
         b for b in [escape(ep["place"]), ep.get("date", ""), ep["dur"]] if b)
 
@@ -422,6 +476,20 @@ def write_episode_page(ep, cover_url):
   .top .meta {{ font-size:.85rem; opacity:.85; }}
   main {{ max-width:720px; margin:0 auto; padding:2rem 1.5rem 4rem; }}
   audio {{ width:100%; margin:0 0 2rem; }}
+  .mapnotes {{ margin:0 0 2.25rem; padding:1.25rem 1.4rem; background:var(--card);
+    border:1px solid var(--border); border-radius:10px; }}
+  .mapnotes h2 {{ margin:0 0 .8rem; font-size:.8rem; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--gold); }}
+  .mapnotes ol {{ margin:0; padding:0; list-style:none; }}
+  .mapnotes li {{ display:flex; align-items:baseline; gap:.6rem; margin:0 0 .55rem;
+    font-size:1rem; line-height:1.4; }}
+  .mapnotes li:last-child {{ margin-bottom:0; }}
+  .stop-n {{ flex:0 0 1.5rem; width:1.5rem; height:1.5rem; border-radius:50%;
+    background:var(--night); color:var(--cream); font-size:.8rem; font-weight:bold;
+    display:inline-flex; align-items:center; justify-content:center; }}
+  .mapnotes a {{ color:var(--ink); text-decoration:none; border-bottom:1px solid var(--gold); }}
+  .stop-geo {{ margin-left:auto; color:var(--muted); font-size:.8rem;
+    font-family:ui-monospace,Menlo,monospace; white-space:nowrap; }}
   .transcript p {{ margin:0 0 1.15rem; font-size:1.08rem; }}
   .transcript p:first-child::first-letter {{
     font-size:3.1rem; font-weight:bold; float:left; line-height:.8;
@@ -444,7 +512,7 @@ def write_episode_page(ep, cover_url):
   </header>
   <main>
     <audio preload="none" controls src="{escape(ep['slug'])}.mp3"></audio>
-    <div class="transcript">
+{mapnotes}    <div class="transcript">
 {transcript}
     </div>
   </main>
