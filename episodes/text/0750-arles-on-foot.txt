@@ -4,11 +4,11 @@ place: Arles
 themes: endurance-of-everyday-life, centralized-power, layered-city, art-and-place, church-and-state, regionalism
 words: ~3300
 voice-notes: numbers spelled for the ear; a walking tour with cardinal directions throughout; self-contained — deliberately re-tells stories from 0700 (Arles as Rome) and 0800 (Van Gogh's Yellow) so the listener needs nothing else while walking
-map: Les Arènes (amphitheater) | 43.6733,4.6253
-map: Place du Forum (café terrace) | 43.6776,4.6268
-map: Thermes de Constantin (baths) | 43.6789,4.6265
-map: Place de la République & Cryptoporticus | 43.6767,4.6280
-map: Espace Van Gogh (Hôtel-Dieu) | 43.6756,4.6259
+map: Les Arènes (amphitheater) | 43.677755,4.631386
+map: Place du Forum (café terrace) | 43.677659,4.626958
+map: Thermes de Constantin (baths) | 43.678987,4.627497
+map: Place de la République & Cryptoporticus | 43.677055,4.626526
+map: Espace Van Gogh (Hôtel-Dieu) | 43.675722,4.625504
 ---
 This one is a walk. Put your comfortable shoes on, because we are going to make a loop through the old town of Arles, six stops, maybe a mile and a half all told, and the whole point is to do it on foot, slowly, letting the city change under your feet. Arles is small. You can cross the historic core in fifteen minutes if you are only trying to get somewhere. But we are not trying to get anywhere. We are trying to read the town the way you read a page, and the thing about Arles is that it has been written on, erased, and written over so many times that the page is nearly black with ink. Roman, medieval, Renaissance, the age of Van Gogh, and now. All of it is here at once, stacked and jumbled, and the walk is really a way of feeling the layers. I am going to tell you the whole story as we go, so you do not need anything but this and your own two feet. Where I point you, I will use the compass, north and south and east and west, because the streets of Arles curl and fold and will happily turn you around, and the one thing that stays honest here is the sun and the river. The river, the Rhône, runs along the western and northern edge of the old town. Keep that in the back of your mind and you will never be truly lost.
 
